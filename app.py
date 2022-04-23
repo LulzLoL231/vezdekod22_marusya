@@ -14,7 +14,7 @@ from vk_api import VKApi
 from database import Database
 
 
-DEV = True
+DEV = False
 CMDS = {
     '10': [
         'mosin вездекод',
@@ -111,30 +111,10 @@ def webhhook():
         return make_register(req)
     elif utter == 'открыть приложение регистрации':
         return make_app(req)
-    elif utter == '/music':
-        return make_test_music(req)
     elif req['session']['new']:
         return make_welcome(req)
     else:
         return make_echo(req)
-
-
-def make_test_music(req: dict) -> str:
-    m = '<speaker audio=marusia-sounds/game-boot-1>'
-    resp = {
-        'response': {
-            'text': m,
-            'tts': m,
-            'end_session': False
-        },
-        'session': {
-            'session_id': req['session']['session_id'],
-            'user_id': req['session']['user_id'],
-            'message_id': req['session']['message_id']
-        },
-        'version': req['version']
-    }
-    return json.dumps(resp)
 
 
 def make_app(req: dict) -> str:
