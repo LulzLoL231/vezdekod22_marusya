@@ -98,7 +98,7 @@ def check_db():
 check_db()
 
 
-@app.route('/', methods=['GET', 'POST'])
+@app.route('/_webhooks/marusya/vezdekod22/', methods=['GET', 'POST'])
 def webhhook():
     req = request.get_json()
     log.debug(f'New request: {req}')
@@ -282,3 +282,8 @@ def make_questions(req: dict) -> str:
             'version': req['version']
         }
     return json.dumps(resp)
+
+
+if __name__ == '__main__':
+    app.run(host='0.0.0.0')
+
