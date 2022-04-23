@@ -51,7 +51,7 @@ cors = CORS(app, resources={
             '/': {"origins": '*',
                   "headers": 'Content-Type, Accept'}})
 logging.basicConfig(
-    format='[%(asctime)s] (%(levelname)s) %(name)s.%(funcName)s (%(lineno)d) >>  %(message)s',
+    format='[%(asctime)s] (%(levelname)s) %(name)s.%(funcName)s (%(lineno)d) >> %(message)s',
     level=logging.DEBUG if DEV else logging.INFO)
 log = logging.getLogger('server')
 
