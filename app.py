@@ -21,14 +21,14 @@ CMDS = {
             'Чат-боты', 'VK Mini Apps'
         ],
         'questions': [
-            'Сейчас мы узнаем какая категория Вездекода вам подойдёт!\n\nВы любите Gamedev?\nОтветьте Да или Нет.',
-            'Ладно, Java лучший язык программирования?\nОтветьте Да или Нет.',
-            'Ну хорошо, а вам нравится разрабатывать мобильные приложения?\nОтветьте Да или Нет.',
-            'Окей, как думаете, PHP лучший язык программирования?\nОтветьте Да или Нет.',
-            'Понятно, а вам нравится разрабатывать Back End?\nОтветьте Да или Нет.',
-            'Ладно, а вам нравится разрабатывать скилы для Маруси?\nОтветьте Да или Нет.',
-            'Понимаю, как думаете, чат-боты спасут мир?\nОтветьте Да или Нет.',
-            'Ясно, а вы любите VK Mini Apps?\nОтветьте Да или Нет.'
+            '<speaker audio=marusia-sounds/game-boot-1>Сейчас мы узнаем какая категория Вездекода вам подойдёт!\n\nВы любите Gamedev?\nОтветьте Да или Нет.',
+            'Ладно. Как думаете, Java лучший язык программирования?\nОтветьте Да или Нет.',
+            'Ну хорошо. А вам нравится разрабатывать мобильные приложения?\nОтветьте Да или Нет.',
+            'Окей. Как думаете, PHP лучший язык программирования?\nОтветьте Да или Нет.',
+            'Понятно. А вам нравится разрабатывать Back End?\nОтветьте Да или Нет.',
+            'Ладно. А вам нравится разрабатывать скилы для Маруси?\nОтветьте Да или Нет.',
+            'Понимаю. Как думаете, чат-боты спасут мир?\nОтветьте Да или Нет.',
+            'Ясно. А вы любите VK Mini Apps?\nОтветьте Да или Нет.'
         ]
     }
 }
@@ -61,15 +61,35 @@ def webhhook():
         return make_welcome(req)
     elif utter.lower() == 'вопросы' or req['state']['session']:
         return make_questions(req)
+    elif utter.lower() == '/music':
+        return make_test_music(req)
     else:
         return make_echo(req)
+
+
+def make_test_music(req: dict) -> str:
+    m = '<speaker audio=marusia-sounds/game-boot-1>'
+    resp = {
+        'response': {
+            'text': m,
+            'tts': m,
+            'end_session': False
+        },
+        'session': {
+            'session_id': req['session']['session_id'],
+            'user_id': req['session']['user_id'],
+            'message_id': req['session']['message_id']
+        },
+        'version': req['version']
+    }
+    return json.dumps(resp)
 
 
 def make_welcome(req: dict) -> str:
     resp = {
         'response': {
             'text': 'Привет вездекодерам!',
-            'tts': 'Привет вездекодерам!',
+            'tts': '<speaker audio=marusia-sounds/music-tambourine-120bpm-1>Привет вездекодерам!',
             'end_session': False
         },
         'session': {
@@ -105,7 +125,7 @@ def _get_cat_name(cat: VK_CATS) -> str:
 
 def make_questions(req: dict) -> str:
     TEXTS = {
-        'yes': 'Спасибо за ответ!\nДумаю вам больше подойдёт категория: {}.\nУдачного вездекодинга!',
+        'yes': 'Спасибо за ответ!\nДумаю вам больше подойдёт категория:<speaker audio=marusia-sounds/music-drums-3> {}.\nУдачного вездекодинга!',
         '404': 'Спасибо за ответы!\nК сожалению, вам не подходит не одна из категорий вездекода.\nНе переживайте, я уверена на следующий вездекод найдётся категория которая будет вам по душе!'
     }
     end_state = False
@@ -116,13 +136,13 @@ def make_questions(req: dict) -> str:
             print(f'[SESSION #{req["session"]["session_id"]}] User #{req["session"]["user_id"]} says {utter}')
             print(f'[SESSION #{req["session"]["session_id"]}] User #{req["session"]["user_id"]} on state {cur_state.name}')
         if utter == 'да':
-            text = TEXTS['yes'].format(_get_cat_name(cur_state))
-            tts = text
+            tts = TEXTS['yes'].format(_get_cat_name(cur_state))
+            text = tts.replace('<speaker audio=marusia-sounds/music-drums-3>', '')
             end_state = True
         else:
             if cur_state.value == 7:
                 text = TEXTS['404']
-                tts = text
+                tts = f'<speaker audio=marusia-sounds/game-loss-3> {text}'
                 end_state = True
             else:
                 cur_state = VK_CATS(cur_state + 1)
