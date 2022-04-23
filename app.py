@@ -40,7 +40,7 @@ class VK_CATS(IntEnum):
     MOBILE = 2
     PHP = 3
     BACKEND = 4
-    MARUSYA = 5
+    MARUSIA = 5
     BOTS = 6
     APPS = 7
 
