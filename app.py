@@ -37,7 +37,11 @@ CMDS = {
             'Понимаю. Как думаете, чат-боты спасут мир?\nОтветьте Да или Нет.',
             'Ясно. А вы любите VK Mini Apps?\nОтветьте Да или Нет.'
         ]
-    }
+    },
+    '50': [
+        'регистрация на вездекод',
+        'регистрация на вездеход'
+    ]
 }
 
 
@@ -50,6 +54,7 @@ class VK_CATS(IntEnum):
     MARUSIA = 5
     BOTS = 6
     APPS = 7
+    LOVELY_MEME = 8
 
 
 app = Flask(__name__)
@@ -97,12 +102,16 @@ check_db()
 def webhhook():
     req = request.get_json()
     log.debug(f'New request: {req}')
-    utter = req['request']['original_utterance']
-    if utter.lower() in CMDS['10']:
+    utter = req['request']['original_utterance'].lower()
+    if utter in CMDS['10']:
         return make_welcome(req)
-    elif utter.lower() == 'вопросы' or req['state']['session']:
+    elif utter == 'вопросы' or req['state']['session']:
         return make_questions(req)
-    elif utter.lower() == '/music':
+    elif utter in CMDS['50']:
+        return make_register(req)
+    elif utter == 'открыть приложение регистрации':
+        return make_app(req)
+    elif utter == '/music':
         return make_test_music(req)
     elif req['session']['new']:
         return make_welcome(req)
@@ -128,14 +137,67 @@ def make_test_music(req: dict) -> str:
     return json.dumps(resp)
 
 
+def make_app(req: dict) -> str:
+    resp = {
+        'response': {
+            'text': 'Открываю приложение регистрации Вездекода.',
+            'tts': 'Открываю приложение регистрации Вездекода.',
+            'end_session': True,
+            'card': {
+                'type': 'MiniApp',
+                'url': 'https://vk.com/app7543093'
+            }
+        },
+        'session': {
+            'session_id': req['session']['session_id'],
+            'user_id': req['session']['user_id'],
+            'message_id': req['session']['message_id']
+        },
+        'version': req['version']
+    }
+    return json.dumps(resp)
+
+
+def make_register(req: dict) -> str:
+    m = 'Ты можешь зарегистрироваться на вездекоде в приложении!\n\nЗаодно, лови мой любимый мем из Конкурса Мемов!'
+    resp = {
+        'response': {
+            'text': m,
+            'tts': m,
+            'end_session': False,
+            'card': {
+                'type': 'BigImage',
+                'image_id': db.get_category_photo(VK_CATS.LOVELY_MEME.value)
+            },
+            'buttons': [
+                {
+                    'title': 'Открыть приложение регистрации',
+                    'action': {
+                        'type': 'open_mini_app',
+                        'app_id': 7543093
+                    }
+                }
+            ]
+        },
+        'session': {
+            'session_id': req['session']['session_id'],
+            'user_id': req['session']['user_id'],
+            'message_id': req['session']['message_id']
+        },
+        'version': req['version']
+    }
+    return json.dumps(resp)
+
+
 def make_welcome(req: dict) -> str:
     resp = {
         'response': {
-            'text': 'Привет вездекодерам!\n\nХочешь узнать какую категорию вездекода тебе лучше выбрать? Спроси у меня "Вопросы"!',
-            'tts': '<speaker audio=marusia-sounds/music-tambourine-120bpm-1>Привет вездекодерам!\n\nХочешь узнать какую категорию вездекода тебе лучше выбрать? Спроси у меня "Вопросы"!',
+            'text': 'Привет вездекодерам!\n\nХочешь узнать какую категорию вездекода тебе лучше выбрать? Спроси у меня "Вопросы"!\nА если хочешь зарегистрироваться на Вездекод, скажи "Регистрация на Вездекод".',
+            'tts': '<speaker audio=marusia-sounds/music-tambourine-120bpm-1>Привет вездекодерам!\n\nХочешь узнать какую категорию вездекода тебе лучше выбрать? Спроси у меня "Вопросы"!\nА если хочешь зарегистрироваться на Вездекод, скажи "Регистрация на Вездекод".',
             'end_session': False,
             'buttons': [
-                {'title': 'Вопросы'}
+                {'title': 'Вопросы'},
+                {'title': 'Регистрация на Вездекод'}
             ]
         },
         'session': {
