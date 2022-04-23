@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 # Vezdekod22 - Marusya
 import json
+import logging
 from enum import IntEnum
 
 from flask import Flask, request
@@ -49,13 +50,16 @@ app = Flask(__name__)
 cors = CORS(app, resources={
             '/': {"origins": '*',
                   "headers": 'Content-Type, Accept'}})
+logging.basicConfig(
+    format='[%(asctime)s] (%(levelname)s) %(name)s.%(funcName)s (%(lineno)d) >>  %(message)s',
+    level=logging.DEBUG if DEV else logging.INFO)
+log = logging.getLogger('server')
 
 
 @app.route('/', methods=['GET', 'POST'])
 def webhhook():
     req = request.get_json()
-    if DEV:
-        print(f'[REQUEST]: {req}')
+    log.debug(f'New request: {req}')
     utter = req['request']['original_utterance']
     if utter.lower() in CMDS['10']:
         return make_welcome(req)
@@ -132,9 +136,8 @@ def make_questions(req: dict) -> str:
     if req['state']['session']:
         cur_state = VK_CATS(req['state']['session']['cat'])
         utter = req['request']['original_utterance'].lower()
-        if DEV:
-            print(f'[SESSION #{req["session"]["session_id"]}] User #{req["session"]["user_id"]} says {utter}')
-            print(f'[SESSION #{req["session"]["session_id"]}] User #{req["session"]["user_id"]} on state {cur_state.name}')
+        log.debug(f'[SESSION #{req["session"]["session_id"]}] User #{req["session"]["user_id"]} says {utter}')
+        log.debug(f'[SESSION #{req["session"]["session_id"]}] User #{req["session"]["user_id"]} on state {cur_state.name}')
         if utter == 'да':
             tts = TEXTS['yes'].format(_get_cat_name(cur_state))
             text = tts.replace('<speaker audio=marusia-sounds/music-drums-3>', '')
@@ -146,8 +149,7 @@ def make_questions(req: dict) -> str:
                 end_state = True
             else:
                 cur_state = VK_CATS(cur_state + 1)
-                if DEV:
-                    print(f'[SESSION #{req["session"]["session_id"]}] User #{req["session"]["user_id"]} on a new state {cur_state.name}')
+                log.debug(f'[SESSION #{req["session"]["session_id"]}] User #{req["session"]["user_id"]} on a new state {cur_state.name}')
                 text = CMDS['20']['questions'][cur_state.value]  # type: ignore
                 tts = text
     else:
@@ -162,7 +164,11 @@ def make_questions(req: dict) -> str:
             'response': {
                 'text': text,
                 'tts': tts,
-                'end_session': False
+                'end_session': False,
+                'buttons': [
+                    {'title': 'Да'},
+                    {'title': 'Нет'}
+                ]
             },
             'session': {
                 'session_id': req['session']['session_id'],
@@ -173,8 +179,7 @@ def make_questions(req: dict) -> str:
             'version': req['version']
         }
     else:
-        if DEV:
-            print(f'[SESSION #{req["session"]["session_id"]}] User #{req["session"]["user_id"]} out from states.')
+        log.debug(f'[SESSION #{req["session"]["session_id"]}] User #{req["session"]["user_id"]} out from states.')
         resp = {
             'response': {
                 'text': text,
