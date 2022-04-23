@@ -104,6 +104,8 @@ def webhhook():
         return make_questions(req)
     elif utter.lower() == '/music':
         return make_test_music(req)
+    elif req['session']['new']:
+        return make_welcome(req)
     else:
         return make_echo(req)
 
@@ -129,9 +131,12 @@ def make_test_music(req: dict) -> str:
 def make_welcome(req: dict) -> str:
     resp = {
         'response': {
-            'text': 'Привет вездекодерам!',
-            'tts': '<speaker audio=marusia-sounds/music-tambourine-120bpm-1>Привет вездекодерам!',
-            'end_session': False
+            'text': 'Привет вездекодерам!\n\nХочешь узнать какую категорию вездекода тебе лучше выбрать? Спроси у меня "Вопросы"!',
+            'tts': '<speaker audio=marusia-sounds/music-tambourine-120bpm-1>Привет вездекодерам!\n\nХочешь узнать какую категорию вездекода тебе лучше выбрать? Спроси у меня "Вопросы"!',
+            'end_session': False,
+            'buttons': [
+                {'title': 'Вопросы'}
+            ]
         },
         'session': {
             'session_id': req['session']['session_id'],
