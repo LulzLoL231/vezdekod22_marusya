@@ -1,11 +1,17 @@
 # -*- coding: utf-8 -*-
 # Vezdekod22 - Marusya
+import os
+import sys
 import json
 import logging
 from enum import IntEnum
+from tabnanny import check
 
 from flask import Flask, request
 from flask_cors import CORS
+
+from vk_api import VKApi
+from database import Database
 
 
 DEV = True
@@ -54,6 +60,37 @@ logging.basicConfig(
     format='[%(asctime)s] (%(levelname)s) %(name)s.%(funcName)s (%(lineno)d) >> %(message)s',
     level=logging.DEBUG if DEV else logging.INFO)
 log = logging.getLogger('server')
+db = Database()
+if 'SKILL_TOKEN' in os.environ:
+    vka = VKApi(os.environ.get('SKILL_TOKEN', ''))
+    resp = vka.marusia_getPictures()
+    if resp:
+        log.info('Logged in VK Api as Skill.')
+    else:
+        log.fatal(f'Can\'t login to VK Api as Skill!\nResponse: {resp}')
+        sys.exit(1)
+else:
+    log.fatal('Can\'t work without skill service key "env: SKILL_TOKEN"!')
+    sys.exit(1)
+
+
+def check_db():
+    log.debug('Creating tables in DB...')
+    db._create_tables()
+    log.debug('Checking photos in DB...')
+    for cat in VK_CATS:
+        if not db.get_category_photo(cat.value):
+            with open(f'photos/{cat.value}.jpg', 'rb') as f:
+                pic_id = vka.uploadPicture(f)
+            if pic_id:
+                db.add_photo(pic_id, cat.value)
+            else:
+                log.fatal('Can\'t upload picture to Skill media\'s!')
+                sys.exit(1)
+    log.debug('Checking complete!')
+
+
+check_db()
 
 
 @app.route('/', methods=['GET', 'POST'])
@@ -184,7 +221,11 @@ def make_questions(req: dict) -> str:
             'response': {
                 'text': text,
                 'tts': tts,
-                'end_session': False
+                'end_session': False,
+                'card': {
+                    'type': 'BigImage',
+                    'image_id': db.get_category_photo(cur_state.value)
+                }
             },
             'session': {
                 'session_id': req['session']['session_id'],
